@@ -3,44 +3,57 @@ from django.contrib.auth.models import Group, User
 from rest_framework import permissions, viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response 
-from .serializers import UserSerializer, GroupSerializer, TransactionSerializer, BudgetSerializer, PotSerializer
+from .serializers import TransactionSerializer, BudgetSerializer, PotSerializer
 from .models import Transaction, Budget, Pot
+from knox.auth import TokenAuthentication
 
 # Create your views here.
-from django.http import HttpResponse
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
-    # add permission to check if user is authenticated
-    permission_classes = [permissions.IsAuthenticated]
-
-
-class GroupViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows groups to be viewed or edited.
-    """
-    queryset = Group.objects.all().order_by('name')
-    serializer_class = GroupSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-
+# Overview page
 class IndexView(APIView):
     # check if user is authenticated
+    authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        ...
         # get content of overview page
-        return Response({'message': 'hello'}) 
+        # pots and budget
+        pots = Pot.objects.filter(user=request.user.id)
+        budgets = Budget.objects.filter(user=request.user.id)
+
+        # transactions
+        transactions = Transaction.objects.filter(user=request.user.id)
+        # 5 recent
+        recent_transactions = transactions.order_by('-date')[:5] 
+        # expenses
+        expenses = transactions.filter(amount__lt=0)
+        # income
+        income = transactions.filter(amount__gt=0)
+        # recurring bills
+        recurring_bills = transactions.filter(recurring=True)
+        
+        # pots and budget serializing
+        pots_serializer = PotSerializer(pots, many=True)
+        budgets_serializer = BudgetSerializer(budgets, many=True)
+
+        # transactions serializing  
+        recent_serializer = TransactionSerializer(recent_transactions, many=True)
+        expenses_serializer = TransactionSerializer(expenses, many=True)
+        income_serializer = TransactionSerializer(income, many=True)
+        recurring_serializer = TransactionSerializer(recurring_bills, many=True)
+
+
+        return Response({ 'pots': pots_serializer.data,
+                          'budgets': budgets_serializer.data,
+                          'income': income_serializer.data,
+                          'expenses': expenses_serializer.data,
+                          'recent_transactions': recent_serializer.data,
+                          'recurring_bills': recurring_serializer.data
+                        }, status=status.HTTP_200_OK) 
     
 
 class BudgetListView(APIView):
     # check if user is authenticated
+    authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request, *args, **kwargs):
@@ -72,6 +85,7 @@ class BudgetListView(APIView):
 
 class BudgetDetailView(APIView):
     # check if user is authenticated
+    authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
     
     # helper method to get budget instance
@@ -88,7 +102,7 @@ class BudgetDetailView(APIView):
 
         if not budget_instance:
             return Response(
-                {'message': 'Object with budget id does not exist'},
+                { 'message': 'Object with budget id does not exist' },
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -102,7 +116,7 @@ class BudgetDetailView(APIView):
 
         if not budget_instance:
             return Response(
-                {'message': 'Object with budget id does not exists'}, 
+                { 'message': 'Object with budget id does not exists' }, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -128,30 +142,41 @@ class BudgetDetailView(APIView):
 
         if not budget_instance:
             return Response(
-                {'message': 'Object with budget id does not exists'}, 
+                { 'message': 'Object with budget id does not exists' }, 
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         budget_instance.delete()
 
         return Response(
-            {'message': 'Budget deleted!'},
+            { 'message': 'Budget deleted!' },
             status=status.HTTP_200_OK
         )   
 
+class BudgetSpendingView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, category,*args, **kwargs):
+        spending = Transaction.objects.filter(user=request.user.id, category=category).order_by('-date')[:3]
+
+        serializer = TransactionSerializer(spending, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class TransactionListView(APIView):
-    
+    authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request, *args, **kwargs):
         ...
-        # get transactions (paginated) of user
-        return Response({'message': 'transaction get view'})
+        # get transactions (paginated) of user*
+        return Response({ 'message': 'transaction get view' })
 
 
 class PotListView(APIView):
-
+    authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request, *args, **kwargs):
@@ -182,4 +207,36 @@ class PotListView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         
+class PotDetailView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
 
+    def get():
+        ...
+
+
+
+    def put():
+        ...
+
+
+
+    def delete():
+        ...        
+
+
+
+# add / withdraw from pot*
+class PotWithdrawView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put():
+        ...
+
+class PotAddView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put():
+        ...
