@@ -1,11 +1,13 @@
 from django.shortcuts import render
 from django.contrib.auth.models import Group, User
+from django.core.paginator import Paginator
 from rest_framework import permissions, viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response 
 from .serializers import TransactionSerializer, BudgetSerializer, PotSerializer
 from .models import Transaction, Budget, Pot
 from knox.auth import TokenAuthentication
+from .helpers import get_sort_str
 
 # Create your views here.
 # Overview page
@@ -169,10 +171,64 @@ class TransactionListView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
     
-    def get(self, request, *args, **kwargs):
-        ...
-        # get transactions (paginated) of user*
-        return Response({ 'message': 'transaction get view' })
+    def get(self, request, sort_by, page, *args, **kwargs):
+        # all transactions of user
+        try:
+            transactions = Transaction.objects.filter(user=request.user.id).order_by('-date')
+            # 10 transactions per page
+            paginator = Paginator(transactions, 10)
+            page_obj = paginator.page(page) 
+            
+            serializer = TransactionSerializer(page_obj, many=True)
+        
+            return Response({ 'page_list': serializer.data, 'num_pages': paginator.num_pages }, status=status.HTTP_200_OK)
+        
+        except:
+            return Response({ 'page_list': [], 'num_pages': 0 }, status=status.HTTP_204_NO_CONTENT)
+
+
+class TransactionCategoryView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, sort_by, page, category,*args, **kwargs):
+        # all transactions of user
+        try:
+            sort = get_sort_str(sort_by)
+
+            transactions = Transaction.objects.filter(user=request.user.id, category=category).order_by(sort)
+            # 10 transactions per page
+            paginator = Paginator(transactions, 10)
+            page_obj = paginator.page(page) 
+            
+            serializer = TransactionSerializer(page_obj, many=True)
+        
+            return Response({ 'page_list': serializer.data, 'num_pages': paginator.num_pages }, status=status.HTTP_200_OK)
+        
+        except:
+            return Response({ 'page_list': [], 'num_pages': 0 }, status=status.HTTP_204_NO_CONTENT)
+
+
+class TransactionSearchView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, sort_by, page, search_term, *args, **kwargs):
+        # all transactions of user
+        try:
+            sort = get_sort_str(sort_by)
+
+            transactions = Transaction.objects.filter(user=request.user.id, name__icontains=search_term).order_by(sort)
+            # 10 transactions per page
+            paginator = Paginator(transactions, 10)
+            page_obj = paginator.page(page) 
+            
+            serializer = TransactionSerializer(page_obj, many=True)
+        
+            return Response({ 'page_list': serializer.data, 'num_pages': paginator.num_pages }, status=status.HTTP_200_OK)
+        
+        except:
+            return Response({ 'page_list': [], 'num_pages': 0 }, status=status.HTTP_204_NO_CONTENT)    
 
 
 class PotListView(APIView):
