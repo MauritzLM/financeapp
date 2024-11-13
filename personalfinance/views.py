@@ -114,7 +114,7 @@ class BudgetDetailView(APIView):
     # UPDATE
     def put(self, request, budget_id, *args, **kwargs):
         
-        budget_instance = self.get_object(budget_id, request.user_id)
+        budget_instance = self.get_object(budget_id, request.user.id)
 
         if not budget_instance:
             return Response(
@@ -140,11 +140,11 @@ class BudgetDetailView(APIView):
     # DELETE
     def delete(self, request, budget_id, *args, **kwargs):
 
-        budget_instance = self.get_object(budget_id, request.user_id)
+        budget_instance = self.get_object(budget_id, request.user.id)
 
         if not budget_instance:
             return Response(
-                { 'message': 'Object with budget id does not exists' }, 
+                { 'message': 'Object with budget id does not exist' }, 
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -174,7 +174,9 @@ class TransactionListView(APIView):
     def get(self, request, sort_by, page, *args, **kwargs):
         # all transactions of user
         try:
-            transactions = Transaction.objects.filter(user=request.user.id).order_by('-date')
+            sort = get_sort_str(sort_by)
+
+            transactions = Transaction.objects.filter(user=request.user.id).order_by(sort)
             # 10 transactions per page
             paginator = Paginator(transactions, 10)
             page_obj = paginator.page(page) 
@@ -267,28 +269,81 @@ class PotDetailView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
 
-    def get():
-        ...
+    # helper method to get budget instance
+    def get_object(self, pot_id, user_id):
+            try:
+                return Pot.objects.get(id=pot_id,  user=user_id)
+            except Pot.DoesNotExist:
+                return None
 
+    # GET
+    def get(self, request, pot_id, *args, **kwargs):
+       
+        pot_instance = self.get_object(pot_id, request.user.id)
 
+        if not pot_instance:
+            return Response(
+                { 'message': 'Object with pot id does not exist' },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-    def put():
-        ...
+        serializer = PotSerializer(pot_instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)        
+    
+    # UPDATE
+    def put(self, request, pot_id, *args, **kwargs):
+        
+        pot_instance = self.get_object(pot_id, request.user.id)
 
+        if not pot_instance:
+            return Response(
+                { 'message': 'Object with pot id does not exists' }, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        data = {
+            'name': request.data.get('name'), 
+            'target': request.data.get('target'),
+            'total': request.data.get('total'),
+            'theme': request.data.get('theme'), 
+            'user': request.user.id
+        }
 
+        serializer = PotSerializer(pot_instance, data=data)
 
-    def delete():
-        ...        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    # DELETE
+    def delete(self, request, pot_id, *args, **kwargs):
+
+        pot_instance = self.get_object(pot_id, request.user.id)
+
+        if not pot_instance:
+            return Response(
+                { 'message': 'Object with pot id does not exist' }, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        pot_instance.delete()
+
+        return Response(
+            { 'message': 'Pot deleted!' },
+            status=status.HTTP_200_OK
+        )         
 
 
 # add / withdraw from pot*
 class PotWithdrawView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
-
+    
     def put():
         ...
+        # remove from total, can't go below 0*
 
 class PotAddView(APIView):
     authentication_classes = (TokenAuthentication,)
@@ -296,3 +351,4 @@ class PotAddView(APIView):
 
     def put():
         ...
+        # add to total, can't go above target*
