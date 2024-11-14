@@ -24,6 +24,23 @@ class PotSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'user': {'write_only': True}}
 
+    def validate(self, data):
+        errors = {}
+        # negative target
+        if data['target'] < 0:
+            errors['target'] = 'Target can\'t be negative'
+        # negative total
+        if data['total'] < 0:
+            errors['total'] = 'Total can\'t be negative'
+        # target can't be higher than total
+        if data['total'] > data['target']:
+            errors['value'] = 'Total can\'t be higher than target'
+
+        if errors:
+            raise serializers.ValidationError(errors)    
+            
+        return data
+
 
 class UserSerializer(serializers.ModelSerializer):
 
@@ -31,7 +48,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'email', 'password']
         extra_kwargs = {'password': {'write_only': True}}
-
 
     def create(self, validated_data):
         user = User(
