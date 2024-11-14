@@ -31,7 +31,7 @@ class Budget(models.Model):
 class Pot(models.Model):
     name = models.CharField(max_length=50)
     target = models.FloatField()
-    total = models.FloatField()
+    total = models.FloatField(default=0.00)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Pots')
     theme = models.CharField(max_length=7)
 
