@@ -304,7 +304,7 @@ class PotDetailView(APIView):
         data = {
             'name': request.data.get('name'), 
             'target': request.data.get('target'),
-            'total': request.data.get('total'),
+            'total': pot_instance.total,
             'theme': request.data.get('theme'), 
             'user': request.user.id
         }
@@ -336,19 +336,76 @@ class PotDetailView(APIView):
         )         
 
 
-# add / withdraw from pot*
+# withdraw from pot
 class PotWithdrawView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
-    
-    def put():
-        ...
-        # remove from total, can't go below 0*
 
+    def get_object(self, pot_id, user_id):
+        try:
+            return Pot.objects.get(id=pot_id, user=user_id)
+        except Pot.DoesNotExist:
+            return None
+        
+    def put(self, request, pot_id, *args, **kwargs):
+
+        pot_instance = self.get_object(pot_id, request.user.id)
+
+        if not pot_instance:
+            return Response(
+                { 'message': 'Object with pot id does not exist' }, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        data = {
+            'name': pot_instance.name, 
+            'target': pot_instance.target,
+            'total': pot_instance.total - float(request.data.get('amount')),
+            'theme': pot_instance.theme, 
+            'user': request.user.id
+        }
+
+        serializer = PotSerializer(pot_instance, data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+# add to pot
 class PotAddView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
 
-    def put():
-        ...
-        # add to total, can't go above target*
+    def get_object(self, pot_id, user_id):
+        try:
+            return Pot.objects.get(id=pot_id, user=user_id)
+        except Pot.DoesNotExist:
+            return None
+
+    def put(self, request, pot_id, *args, **kwargs):
+        
+        pot_instance = self.get_object(pot_id, request.user.id)
+
+        if not pot_instance:
+            return Response(
+                { 'message': 'Object with pot id does not exist' }, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        data = {
+            'name': pot_instance.name, 
+            'target': pot_instance.target,
+            'total': pot_instance.total + float(request.data.get('amount')),
+            'theme': pot_instance.theme, 
+            'user': request.user.id
+        }
+
+        serializer = PotSerializer(pot_instance, data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
