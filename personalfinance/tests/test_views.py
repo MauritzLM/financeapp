@@ -289,7 +289,7 @@ class PotListViewTest(TestCase):
 
 
 # pot detail view
-class PotDetailView(TestCase):
+class PotDetailViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
@@ -337,7 +337,6 @@ class PotDetailView(TestCase):
         data = {
             'name': 'Savings', 
             'target': 2100.00,
-            'total': 150.00,
             'theme': '#82C9D7', 
             'user': self.test_user1
         }
@@ -353,17 +352,19 @@ class PotDetailView(TestCase):
         client.force_authenticate(self.test_user1)
 
         data = {
-            'name': '', 
-            'target': 2100.00,
-            'total': 150.00,
+            'name': 'Savings', 
+            'target': -100.00,
             'theme': '#82C9D7', 
             'user': self.test_user1
         }
         
         response = client.put('/finance-api/pots/1', data)
-        # print(response.data)
-        # add check for error*
+        
+        # add check for error*, empty name, negative target
         self.assertEqual(response.status_code, 400)
+        # print(response.data)
+        # self.assertEqual(response.data['name'][0], 'This field may not be blank')
+        self.assertEqual(response.data['target'][0], 'Target can\'t be negative')
                 
     # delete
     def test_delete_with_valid_data(self):
@@ -384,14 +385,105 @@ class PotDetailView(TestCase):
         self.assertEqual(response.data['message'], 'Object with pot id does not exist')
 
 # pot status view
-class PotStatusViewTest(TestCase):
-    ...
+class PotWithdrawViewTest(TestCase):
+    def setUp(self):
+        self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
-    # url
+        Pot.objects.create(name='Savings', target=2000.00, total=150.00, theme='#277C78', user=self.test_user1)
+
+    # url exists
+    def test_url_exists(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/pots/withdraw/1')
+        # no get method
+        self.assertEqual(response.status_code, 405)
 
     # user not logged in
+    def test_user_not_logged_in(self):
+        client = APIClient()
 
-    # put -> withdraw, add, valid/invalid
+        response = client.get('/finance-api/pots/withdraw/1')
+        self.assertEqual(response.status_code, 401)
+
+    # put
+    def test_put_subtracts_amount_from_total(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+        
+        data = {
+            'amount': 100.00,
+        }
+
+        response = client.put('/finance-api/pots/withdraw/1', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['total'], 50.00)
+
+
+    def test_amount_puts_total_below_zero_raises_validation_error(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+        
+        data = {
+            'amount': 160.00,
+        }
+
+        response = client.put('/finance-api/pots/withdraw/1', data)
+        # add check for error
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['total'][0], 'Total can\'t be negative')
+
+
+class PotAddViewTest(TestCase):
+    def setUp(self):
+        self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
+
+        Pot.objects.create(name='Savings', target=2000.00, total=150.00, theme='#277C78', user=self.test_user1)
+
+    # url exists
+    def test_url_exists(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/pots/add/1')
+        # no get method
+        self.assertEqual(response.status_code, 405)
+
+    # user not logged in
+    def test_user_not_logged_in(self):
+        client = APIClient()
+
+        response = client.get('/finance-api/pots/add/1')
+        self.assertEqual(response.status_code, 401)
+    
+    # put
+    def test_put_adds_amount_to_total(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+        
+        data = {
+            'amount': 100.00,
+        }
+
+        response = client.put('/finance-api/pots/add/1', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['total'], 250.00)
+
+
+    def test_amount_puts_target_above_total_raises_validation_error(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+        
+        data = {
+            'amount': 2000.00,
+        }
+
+        response = client.put('/finance-api/pots/add/1', data)
+        # add check for error
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['value'][0], 'Total can\'t be higher than target') 
+
 
 # transaction list view
 class TransactionListViewTest(TestCase):
