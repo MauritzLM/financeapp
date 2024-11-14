@@ -1,6 +1,9 @@
 from django.urls import path
-
-from .views import BudgetListView, IndexView, PotListView, BudgetDetailView, BudgetSpendingView, TransactionListView, TransactionCategoryView, TransactionSearchView, PotDetailView
+from .views import (
+    BudgetListView, IndexView, PotListView, BudgetDetailView,
+    BudgetSpendingView, TransactionListView, TransactionCategoryView,
+    TransactionSearchView, PotDetailView, PotAddView, PotWithdrawView
+    ) 
 from .auth_views import UserCreate
 
 urlpatterns = [
@@ -9,6 +12,8 @@ urlpatterns = [
     path('budgets', BudgetListView.as_view()),
     path('pots', PotListView.as_view()),
     path('pots/<int:pot_id>', PotDetailView.as_view()),
+    path('pots/withdraw/<int:pot_id>', PotWithdrawView.as_view()),
+    path('pots/add/<int:pot_id>', PotAddView.as_view()),
     path('budgets/<int:budget_id>', BudgetDetailView.as_view()),
     path('budgets/<str:category>', BudgetSpendingView.as_view()),
     path('transactions/<str:sort_by>/<int:page>', TransactionListView.as_view()),
