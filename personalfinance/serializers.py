@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group, User
+from django.contrib.auth import authenticate
 from rest_framework import serializers
 
 from .models import Budget, Pot, Transaction
@@ -42,7 +43,7 @@ class PotSerializer(serializers.ModelSerializer):
         return data
 
 
-class UserSerializer(serializers.ModelSerializer):
+class CreateUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
@@ -57,3 +58,18 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username')    
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
+    def validate(self, data):
+        user = authenticate(**data)
+        if user and user.is_active:
+            return user
+        raise serializers.ValidationError("Invalid Details.")      

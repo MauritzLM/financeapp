@@ -4,11 +4,14 @@ from .views import (
     BudgetSpendingView, TransactionListView, TransactionCategoryView,
     TransactionSearchView, PotDetailView, PotAddView, PotWithdrawView
     ) 
-from .auth_views import UserCreate
+from .auth_views import UserCreate, LoginAPI
+from knox import views as knox_views
 
 urlpatterns = [
     path('overview', IndexView.as_view()),
     path('users', UserCreate.as_view()),
+    path('login', LoginAPI.as_view()),
+    path('logout', knox_views.LogoutView.as_view()),
     path('budgets', BudgetListView.as_view()),
     path('pots', PotListView.as_view()),
     path('pots/<int:pot_id>', PotDetailView.as_view()),
