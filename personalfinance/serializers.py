@@ -40,15 +40,28 @@ class PotSerializer(serializers.ModelSerializer):
         if errors:
             raise serializers.ValidationError(errors)    
             
-        return data
+        return super().validate(data)
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = ['username', 'email', 'password']
         extra_kwargs = {'password': {'write_only': True}}
+
+    def validate(self, data):
+        errors = {}
+
+        if len(data['password']) < 8:
+            errors['password'] = 'min 8 characters'
+
+        if len(data['username']) < 5:
+            errors['username'] = 'min 5 characters'
+        
+        if errors:
+            raise serializers.ValidationError(errors)
+                
+        return super().validate(data)    
 
     def create(self, validated_data):
         user = User(
@@ -58,11 +71,13 @@ class CreateUserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+    
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username')    
+
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
