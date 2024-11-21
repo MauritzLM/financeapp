@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from rest_framework import permissions, viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response 
-from .serializers import TransactionSerializer, BudgetSerializer, PotSerializer
+from .serializers import TransactionSerializer, BudgetSerializer, PotSerializer, BudgetSpendingSerializer
 from .models import Transaction, Budget, Pot
 from knox.auth import TokenAuthentication
 from .helpers import get_sort_str
@@ -16,15 +16,27 @@ class IndexView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         # get content of overview page
         # pots and budget
         pots = Pot.objects.filter(user=request.user.id)
         budgets = Budget.objects.filter(user=request.user.id)
-
         # transactions
         transactions = Transaction.objects.filter(user=request.user.id)
-        # 5 recent
+        
+        # calculate budget spending
+        budget_spending = {}
+        # get all budget categories
+        for budget in budgets:
+            budget_spending[f'{budget.category}'] = 0
+        
+        # using budget category loop over transactions (migth have to filter further using date*)
+        for key in budget_spending:
+            for transaction in transactions:
+                if key == transaction.category:
+                    budget_spending[f'{key}'] += transaction.amount
+
+        # 5 recent transactions
         recent_transactions = transactions.order_by('-date')[:5] 
         # expenses
         expenses = transactions.filter(amount__lt=0)
@@ -49,7 +61,8 @@ class IndexView(APIView):
                           'income': income_serializer.data,
                           'expenses': expenses_serializer.data,
                           'recent_transactions': recent_serializer.data,
-                          'recurring_bills': recurring_serializer.data
+                          'recurring_bills': recurring_serializer.data,
+                          'budget_spending': budget_spending
                         }, status=status.HTTP_200_OK) 
     
 
