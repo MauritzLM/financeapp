@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     BudgetListView, IndexView, PotListView, BudgetDetailView,
-    BudgetSpendingView, TransactionListView, TransactionCategoryView,
+    BudgetSpendingView, TransactionListView,RecurringTransactionsView,
     TransactionSearchView, PotDetailView, PotAddView, PotWithdrawView
     ) 
 from .auth_views import UserCreate, LoginAPI
@@ -19,7 +19,7 @@ urlpatterns = [
     path('pots/add/<int:pot_id>', PotAddView.as_view()),
     path('budgets/<int:budget_id>', BudgetDetailView.as_view()),
     path('budgets/<str:category>', BudgetSpendingView.as_view()),
-    path('transactions/<str:sort_by>/<int:page>', TransactionListView.as_view()),
-    path('transactions/category/<str:category>/<str:sort_by>/<int:page>', TransactionCategoryView.as_view()),
+    path('transactions/recurring', RecurringTransactionsView.as_view()),
+    path('transactions/<str:category>/<str:sort_by>/<int:page>', TransactionListView.as_view()),
     path('transactions/search/<str:search_term>/<str:sort_by>/<int:page>', TransactionSearchView.as_view()),
 ]

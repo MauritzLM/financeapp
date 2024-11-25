@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from rest_framework import permissions, viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response 
-from .serializers import TransactionSerializer, BudgetSerializer, PotSerializer, BudgetSpendingSerializer
+from .serializers import TransactionSerializer, BudgetSerializer, PotSerializer
 from .models import Transaction, Budget, Pot
 from knox.auth import TokenAuthentication
 from .helpers import get_sort_str
@@ -16,7 +16,7 @@ class IndexView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         # get content of overview page
         # pots and budget
         pots = Pot.objects.filter(user=request.user.id)
@@ -72,11 +72,24 @@ class BudgetListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request, *args, **kwargs):
-        
-        # get all budgets of user
+        # get all budgets of user & budget spending
         budgets = Budget.objects.filter(user = request.user.id)
+        transactions = Transaction.objects.filter(user=request.user.id)
+        # calculate budget spending
+        budget_spending = {}
+        # get all budget categories
+        for budget in budgets:
+            budget_spending[f'{budget.category}'] = 0
+        
+        # using budget category loop over transactions (migth have to filter further using date*)
+        for key in budget_spending:
+            for transaction in transactions:
+                if key == transaction.category:
+                    budget_spending[f'{key}'] += transaction.amount
+
         serializer = BudgetSerializer(budgets, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response({'budgets': serializer.data, 'budget_spending': budget_spending}, status=status.HTTP_200_OK)
     
     # CREATE NEW
     def post(self, request, *args, **kwargs):
@@ -183,35 +196,21 @@ class BudgetSpendingView(APIView):
 class TransactionListView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
-    
-    def get(self, request, sort_by, page, *args, **kwargs):
-        # all transactions of user
-        try:
-            sort = get_sort_str(sort_by)
-
-            transactions = Transaction.objects.filter(user=request.user.id).order_by(sort)
-            # 10 transactions per page
-            paginator = Paginator(transactions, 10)
-            page_obj = paginator.page(page) 
-            
-            serializer = TransactionSerializer(page_obj, many=True)
-        
-            return Response({ 'page_list': serializer.data, 'num_pages': paginator.num_pages }, status=status.HTTP_200_OK)
-        
-        except:
-            return Response({ 'page_list': [], 'num_pages': 0 }, status=status.HTTP_204_NO_CONTENT)
-
-
-class TransactionCategoryView(APIView):
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, sort_by, page, category,*args, **kwargs):
-        # all transactions of user
         try:
+            # sort by
             sort = get_sort_str(sort_by)
 
-            transactions = Transaction.objects.filter(user=request.user.id, category=category).order_by(sort)
+            transactions = ...
+            
+            # category selected
+            if category == 'All':
+                transactions = Transaction.objects.filter(user=request.user.id).order_by(sort)
+
+            else:    
+                transactions = Transaction.objects.filter(user=request.user.id, category=category).order_by(sort)
+
             # 10 transactions per page
             paginator = Paginator(transactions, 10)
             page_obj = paginator.page(page) 
@@ -233,7 +232,13 @@ class TransactionSearchView(APIView):
         try:
             sort = get_sort_str(sort_by)
 
-            transactions = Transaction.objects.filter(user=request.user.id, name__icontains=search_term).order_by(sort)
+            transactions = ...
+
+            if search_term == 'empty':
+                transactions = Transaction.objects.filter(user=request.user.id).order_by(sort)
+            else:
+                transactions = Transaction.objects.filter(user=request.user.id, name__icontains=search_term).order_by(sort)
+
             # 10 transactions per page
             paginator = Paginator(transactions, 10)
             page_obj = paginator.page(page) 
@@ -246,12 +251,25 @@ class TransactionSearchView(APIView):
             return Response({ 'page_list': [], 'num_pages': 0 }, status=status.HTTP_204_NO_CONTENT)    
 
 
+class RecurringTransactionsView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        
+        transactions = Transaction.objects.filter(user=request.user.id)
+        recurring_bills = transactions.filter(recurring=True)
+
+        serializer = TransactionSerializer(recurring_bills, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class PotListView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request, *args, **kwargs):
-        ...
         # get all pots of user
         pots = Pot.objects.filter(user = request.user.id)
         serializer = PotSerializer(pots, many=True)
