@@ -18,6 +18,23 @@ class BudgetSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'user': {'write_only': True}}
 
+    def validate(self, data):
+        errors = {}
+        # empty category
+        if data['category'] == '':
+            errors['category'] = 'Please select a category'
+        # negative maximum
+        if data['maximum'] < 0:
+            errors['maximum'] = 'Maximum can\'t be negative'
+        # empty theme
+        if data['theme'] == '':
+            errors['theme'] = 'Please select a theme'
+
+        if errors:
+            raise serializers.ValidationError(errors)    
+            
+        return super().validate(data)        
+
 
 class PotSerializer(serializers.ModelSerializer):
     class Meta:
@@ -87,4 +104,4 @@ class LoginSerializer(serializers.Serializer):
         user = authenticate(**data)
         if user and user.is_active:
             return user
-        raise serializers.ValidationError("Invalid Details.")      
+        raise serializers.ValidationError("Invalid Details.")
