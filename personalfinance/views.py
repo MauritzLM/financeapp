@@ -105,7 +105,7 @@ class BudgetListView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data , status=status.HTTP_201_CREATED)
         
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -185,12 +185,28 @@ class BudgetSpendingView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, category,*args, **kwargs):
+    def get(self, request, category, *args, **kwargs):
         spending = Transaction.objects.filter(user=request.user.id, category=category).order_by('-date')[:3]
 
         serializer = TransactionSerializer(spending, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class NewBudgetSpendingView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, category, *args, **kwargs):
+        spending = Transaction.objects.filter(user=request.user.id, category=category)
+
+        budget_spending = {}
+        budget_spending[category] = 0
+
+        for transaction in spending:
+            if category == transaction.category:
+                budget_spending[category] += transaction.amount
+
+        return Response(budget_spending, status=status.HTTP_200_OK)             
 
 
 class TransactionListView(APIView):
