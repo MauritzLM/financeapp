@@ -10,7 +10,19 @@ User = get_user_model()
 class IndexViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
-
+        
+        # test budgets
+        Budget.objects.create(category='Entertainment', maximum=200.00, theme='#277C78', user=self.test_user1)
+        Budget.objects.create(category='Bills', maximum=700.00, theme='#626070', user=self.test_user1)
+        Budget.objects.create(category='Shopping', maximum=700.00, theme='#626070', user=self.test_user1)
+        # test transactions
+        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='General', date='2024-07-12T13:40:46Z', amount=100.00, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Shopping', date='2024-07-30T13:20:14Z', amount=-35.00, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-100.00, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Nimbus Data Storage', category='Bills', date='2024-07-21T10:05:42Z', amount=-9.99, recurring=True, user=self.test_user1)
+        # test pots
+        Pot.objects.create(name='Savings', target=2000.00, total=150.00, theme='#277C78', user=self.test_user1) 
+        
     def test_url_exists(self):
         client = APIClient()
         client.force_authenticate(self.test_user1)
@@ -18,6 +30,26 @@ class IndexViewTest(TestCase):
         response = client.get('/finance-api/overview')
         self.assertEqual(response.status_code, 200)
 
+    def test_user_not_logged_in(self):
+        client = APIClient()
+        response = client.get('/finance-api/overview')
+        self.assertEqual(response.status_code, 401)    
+
+    def test_get_response(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+        
+        response = client.get('/finance-api/overview')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 7)
+        self.assertEqual(len(response.data['budgets']), 3)
+        self.assertEqual(len(response.data['pots']), 1)
+        self.assertEqual(len(response.data['recent_transactions']), 4)
+        self.assertEqual(len(response.data['income']), 1)
+        self.assertEqual(len(response.data['expenses']), 3)
+        self.assertEqual(len(response.data['recurring_bills']), 2)
+        self.assertEqual(response.data['budget_spending']['Shopping'], -35.0)
+        self.assertEqual(response.data['budget_spending']['Bills'], -109.99)             
 
 # budget list view
 class BudgetListViewTest(TestCase):
@@ -218,7 +250,41 @@ class BudgetSpendingViewTest(TestCase):
         response = client.get('/finance-api/budgets/Bills')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 3)
+
+
+# new budget spending view
+class NewBudgetSpendingViewTest(TestCase):
+    def setUp(self):
+        self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
         
+        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='Bills', date='2024-07-12T13:40:46Z', amount=-95.50, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Bills', date='2024-07-30T13:20:14Z', amount=-35.00, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-100.00, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Nimbus Data Storage', category='Bills', date='2024-07-21T10:05:42Z', amount=-9.99, recurring=True, user=self.test_user1)
+        
+    # url
+    def test_url_exists(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/budgets/new/Bills')
+        self.assertEqual(response.status_code, 200)
+
+    # user not logged in
+    def user_not_logged_in(self):
+        client = APIClient()
+        
+        response = client.get('/finance-api/budgets/new/Bills')
+        self.assertEqual(response.status_code, 401)
+
+    # test spending amount
+    def test_get_response_data(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/budgets/new/Bills')
+        self.assertEqual(response.data['Bills'], -240.49)      
+
 
 # pot list view
 class PotListViewTest(TestCase):
@@ -285,7 +351,6 @@ class PotListViewTest(TestCase):
         response = client.post('/finance-api/pots', data)
 
         self.assertEqual(response.status_code, 201)
-
 
 
 # pot detail view
@@ -508,14 +573,14 @@ class TransactionListViewTest(TestCase):
         client = APIClient()
         client.force_authenticate(self.test_user1)
 
-        response = client.get('/finance-api/transactions/Latest/1')
+        response = client.get('/finance-api/transactions/All/Latest/1')
         self.assertEqual(response.status_code, 200) 
-
+       
     # user not logged in
     def test_user_not_logged_in(self):
         client = APIClient()
         
-        response = client.get('/finance-api/transactions/Latest/1')
+        response = client.get('/finance-api/transactions/All/Latest/1')
         self.assertEqual(response.status_code, 401)
 
     # get
@@ -523,7 +588,7 @@ class TransactionListViewTest(TestCase):
         client = APIClient()
         client.force_authenticate(self.test_user1)
 
-        response = client.get('/finance-api/transactions/Latest/1')
+        response = client.get('/finance-api/transactions/All/Latest/1')
         self.assertEqual(len(response.data['page_list']), 10)
         self.assertEqual(response.data['num_pages'], 2)
 
@@ -531,72 +596,31 @@ class TransactionListViewTest(TestCase):
         client = APIClient()
         client.force_authenticate(self.test_user1)
 
-        response = client.get('/finance-api/transactions/Latest/2')
+        response = client.get('/finance-api/transactions/All/Latest/2')
         self.assertEqual(len(response.data['page_list']), 1)
         self.assertEqual(response.data['num_pages'], 2)
+    
+    def test_get_category_list(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
 
+        response = client.get('/finance-api/transactions/Transportation/Latest/1')
+        self.assertEqual(len(response.data['page_list']), 3)
+        self.assertEqual(response.data['num_pages'], 1)
+
+    # test diff sort?* 
 
     def test_get_empty_page(self):
         client = APIClient()
         client.force_authenticate(self.test_user1)
 
-        response = client.get('/finance-api/transactions/Latest/3')
+        response = client.get('/finance-api/transactions/All/Latest/3')
         self.assertEqual(response.status_code, 204)
         self.assertEqual(len(response.data['page_list']), 0)
         self.assertEqual(response.data['num_pages'], 0)   
 
 
-
-class TransactionCategoryViewTest(TestCase):
-    def setUp(self):
-        self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
-        
-        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='Bills', date='2024-07-12T13:40:46Z', amount=-95.50, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Bills', date='2024-07-30T13:20:14Z', amount=-35.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Sebastian Cook', category='Transportation', date='2024-07-07T11:45:55Z', amount=-20.00, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Mason Martinez', category='Lifestyle', date='2024-07-08T15:20:41Z', amount=-65.00, recurring=False, user=self.test_user1)
-
-    # url
-    def test_url_exists(self):
-        client = APIClient()
-        client.force_authenticate(self.test_user1)
-
-        response = client.get('/finance-api/transactions/category/Bills/Latest/1')
-        self.assertEqual(response.status_code, 200) 
-
-    # user not logged in
-    def test_user_not_logged_in(self):
-        client = APIClient()
-        
-        response = client.get('/finance-api/transactions/category/Bills/Latest/1')
-        self.assertEqual(response.status_code, 401)
-
-    # get -> status & pagination
-    def test_get_fetches_only_requested_catgory(self):
-        client = APIClient()
-        client.force_authenticate(self.test_user1)
-
-        response = client.get('/finance-api/transactions/category/Bills/Latest/1')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data['page_list']), 2)
-
-    def test_get_empty_category(self):
-        client = APIClient()
-        client.force_authenticate(self.test_user1)
-
-        response = client.get('/finance-api/transactions/category/General/Latest/1')
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data['page_list']), 0)
-
-    def test_get_empty_page(self):
-        client = APIClient()
-        client.force_authenticate(self.test_user1)
-
-        response = client.get('/finance-api/transactions/category/Bills/Latest/2')
-        self.assertEqual(response.status_code, 204)
-        self.assertEqual(len(response.data['page_list']), 0)        
-
-  
+# transaction search  
 class TransactionSearchViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
@@ -647,4 +671,36 @@ class TransactionSearchViewTest(TestCase):
         self.assertEqual(response.status_code, 204)
         self.assertEqual(len(response.data['page_list']), 0)        
 
-    # get -> sort, amount sort    
+
+# recurring transactions view
+class RecurringTransactionsViewTest(TestCase):
+    def setUp(self):
+        self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
+
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-100.00, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Swift Ride Share', category='Transportation', date='2024-07-02T19:50:05Z', amount=-16.50, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Serenity Spa & Wellness', category='Personal Care', date='2024-07-03T14:00:37Z', amount=-30.00, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Elevate Education', category='Education', date='2024-07-05T11:15:22Z', amount=-50.00, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='William Harris', category='General', date='2024-07-06T17:10:09Z', amount=20.00, recurring=False, user=self.test_user1)
+     
+    # url
+    def test_url_exists(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/transactions/recurring')
+        self.assertEqual(response.status_code, 200) 
+
+    # user not logged in
+    def test_user_not_logged_in(self):
+        client = APIClient()
+        
+        response = client.get('/finance-api/transactions/recurring')
+        self.assertEqual(response.status_code, 401)
+
+    def test_response_data(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/transactions/recurring')
+        self.assertEqual(len(response.data), 3)    
