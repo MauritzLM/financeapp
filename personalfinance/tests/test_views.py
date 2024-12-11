@@ -12,16 +12,16 @@ class IndexViewTest(TestCase):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
         
         # test budgets
-        Budget.objects.create(category='Entertainment', maximum=200.00, theme='#277C78', user=self.test_user1)
-        Budget.objects.create(category='Bills', maximum=700.00, theme='#626070', user=self.test_user1)
-        Budget.objects.create(category='Shopping', maximum=700.00, theme='#626070', user=self.test_user1)
+        Budget.objects.create(category='Entertainment', maximum=20000, theme='#277C78', user=self.test_user1)
+        Budget.objects.create(category='Bills', maximum=70000, theme='#626070', user=self.test_user1)
+        Budget.objects.create(category='Shopping', maximum=70000, theme='#626070', user=self.test_user1)
         # test transactions
-        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='General', date='2024-07-12T13:40:46Z', amount=100.00, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Shopping', date='2024-07-30T13:20:14Z', amount=-35.00, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-100.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Nimbus Data Storage', category='Bills', date='2024-07-21T10:05:42Z', amount=-9.99, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='General', date='2024-07-12T13:40:46Z', amount=10000, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Shopping', date='2024-07-30T13:20:14Z', amount=-3500, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-10000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Nimbus Data Storage', category='Bills', date='2024-07-21T10:05:42Z', amount=-999, recurring=True, user=self.test_user1)
         # test pots
-        Pot.objects.create(name='Savings', target=2000.00, total=150.00, theme='#277C78', user=self.test_user1) 
+        Pot.objects.create(name='Savings', target=200000, total=15000, theme='#277C78', user=self.test_user1) 
         
     def test_url_exists(self):
         client = APIClient()
@@ -48,8 +48,8 @@ class IndexViewTest(TestCase):
         self.assertEqual(len(response.data['income']), 1)
         self.assertEqual(len(response.data['expenses']), 3)
         self.assertEqual(len(response.data['recurring_bills']), 2)
-        self.assertEqual(response.data['budget_spending']['Shopping'], -35.0)
-        self.assertEqual(response.data['budget_spending']['Bills'], -109.99)             
+        self.assertEqual(response.data['budget_spending']['Shopping'], -3500)
+        self.assertEqual(response.data['budget_spending']['Bills'], -10999)             
 
 # budget list view
 class BudgetListViewTest(TestCase):
@@ -57,8 +57,8 @@ class BudgetListViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
-        Budget.objects.create(category='Entertainment', maximum=400.00, theme='#277C78', user=self.test_user1)
-        Budget.objects.create(category='Personal care', maximum=200.00, theme='#626070', user=self.test_user1)
+        Budget.objects.create(category='Entertainment', maximum=40000, theme='#277C78', user=self.test_user1)
+        Budget.objects.create(category='Personal care', maximum=20000, theme='#626070', user=self.test_user1)
 
     def test_url_exists(self):
         client = APIClient()
@@ -120,8 +120,8 @@ class BudgetDetailViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
-        Budget.objects.create(category='Entertainment', maximum=400.00, theme='#277C78', user=self.test_user1)
-        Budget.objects.create(category='Personal care', maximum=200.00, theme='#626070', user=self.test_user1)
+        Budget.objects.create(category='Entertainment', maximum=40000, theme='#277C78', user=self.test_user1)
+        Budget.objects.create(category='Personal care', maximum=20000, theme='#626070', user=self.test_user1)
 
     # url exists
     def test_url_exists(self):
@@ -145,7 +145,7 @@ class BudgetDetailViewTest(TestCase):
 
         response = client.get('/finance-api/budgets/1')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['maximum'], 400.00)
+        self.assertEqual(response.data['maximum'], 40000)
         self.assertEqual(response.data['theme'], '#277C78')
 
     def test_get_budget_not_found(self):
@@ -163,7 +163,7 @@ class BudgetDetailViewTest(TestCase):
         
         data = {
             'category': 'Entertainment', 
-            'maximum': 450.00,
+            'maximum': 450,
             'theme': '#000', 
             'user': self.test_user1
         }
@@ -171,7 +171,7 @@ class BudgetDetailViewTest(TestCase):
         response = client.put('/finance-api/budgets/1', data)
         self.assertEqual(response.status_code, 200)
         # updated fields
-        self.assertEqual(response.data['maximum'], 450.00)
+        self.assertEqual(response.data['maximum'], 45000)
         self.assertEqual(response.data['theme'], '#000')
 
     def test_put_with_invalid_data(self):
@@ -180,7 +180,7 @@ class BudgetDetailViewTest(TestCase):
 
         data = {
             'category': 'Entertainment', 
-            'maximum': 450.00,
+            'maximum': 450,
             'theme': '', 
             'user': self.test_user1
         }
@@ -214,10 +214,10 @@ class BudgetSpendingViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
         
-        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='Bills', date='2024-07-12T13:40:46Z', amount=-95.50, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Bills', date='2024-07-30T13:20:14Z', amount=-35.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-100.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Nimbus Data Storage', category='Bills', date='2024-07-21T10:05:42Z', amount=-9.99, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='Bills', date='2024-07-12T13:40:46Z', amount=-9550, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Bills', date='2024-07-30T13:20:14Z', amount=-3500, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-10000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Nimbus Data Storage', category='Bills', date='2024-07-21T10:05:42Z', amount=-999, recurring=True, user=self.test_user1)
         
     # url
     def test_url_exists(self):
@@ -257,10 +257,10 @@ class NewBudgetSpendingViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
         
-        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='Bills', date='2024-07-12T13:40:46Z', amount=-95.50, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Bills', date='2024-07-30T13:20:14Z', amount=-35.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-100.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Nimbus Data Storage', category='Bills', date='2024-07-21T10:05:42Z', amount=-9.99, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='Bills', date='2024-07-12T13:40:46Z', amount=-9550, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Bills', date='2024-07-30T13:20:14Z', amount=-3500, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-10000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Nimbus Data Storage', category='Bills', date='2024-07-21T10:05:42Z', amount=-999, recurring=True, user=self.test_user1)
         
     # url
     def test_url_exists(self):
@@ -283,7 +283,7 @@ class NewBudgetSpendingViewTest(TestCase):
         client.force_authenticate(self.test_user1)
 
         response = client.get('/finance-api/budgets/new/Bills')
-        self.assertEqual(response.data['Bills'], -240.49)      
+        self.assertEqual(response.data['Bills'], -24049)      
 
 
 # pot list view
@@ -291,8 +291,8 @@ class PotListViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
-        Pot.objects.create(name='Savings', target=2000.00, total=150.00, theme='#277C78', user=self.test_user1)
-        Pot.objects.create(name='Gift', target=150.00, total=110.00, theme='#82C9D7', user=self.test_user1)
+        Pot.objects.create(name='Savings', target=200000, total=15000, theme='#277C78', user=self.test_user1)
+        Pot.objects.create(name='Gift', target=15000, total=11000, theme='#82C9D7', user=self.test_user1)
 
     # url
     def test_url_exists(self):
@@ -327,8 +327,8 @@ class PotListViewTest(TestCase):
 
         data = {
              'name': 'New Laptop', 
-             'target': 900.00,
-             'total': 315.00,
+             'target': 900,
+             'total': 315,
              'theme': '',
          }
 
@@ -344,11 +344,12 @@ class PotListViewTest(TestCase):
         data = {
              'name': 'New Laptop', 
              'target': 900.00,
-             'total': 315.00,
+             'total': 315,
              'theme': '#F2CDAC',
          }
 
         response = client.post('/finance-api/pots', data)
+        print(response.data)
 
         self.assertEqual(response.status_code, 201)
 
@@ -358,7 +359,7 @@ class PotDetailViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
-        Pot.objects.create(name='Savings', target=2000.00, total=150.00, theme='#277C78', user=self.test_user1)
+        Pot.objects.create(name='Savings', target=200000, total=15000, theme='#277C78', user=self.test_user1)
 
     # url exists
     def test_url_exists(self):
@@ -383,7 +384,7 @@ class PotDetailViewTest(TestCase):
         response = client.get('/finance-api/pots/1')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['name'], 'Savings')
-        self.assertEqual(response.data['target'], 2000.00)
+        self.assertEqual(response.data['target'], 200000)
         self.assertEqual(response.data['theme'], '#277C78')
 
     def test_get_pot_not_found(self):
@@ -401,7 +402,7 @@ class PotDetailViewTest(TestCase):
         
         data = {
             'name': 'Savings', 
-            'target': 2100.00,
+            'target': 2100,
             'theme': '#82C9D7', 
             'user': self.test_user1
         }
@@ -409,7 +410,7 @@ class PotDetailViewTest(TestCase):
         response = client.put('/finance-api/pots/1', data)
         self.assertEqual(response.status_code, 200)
         # updated fields
-        self.assertEqual(response.data['target'], 2100.00)
+        self.assertEqual(response.data['target'], 210000)
         self.assertEqual(response.data['theme'], '#82C9D7')
 
     def test_put_with_invalid_data(self):
@@ -418,7 +419,7 @@ class PotDetailViewTest(TestCase):
 
         data = {
             'name': 'Savings', 
-            'target': -100.00,
+            'target': -100,
             'theme': '#82C9D7', 
             'user': self.test_user1
         }
@@ -454,7 +455,7 @@ class PotWithdrawViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
-        Pot.objects.create(name='Savings', target=2000.00, total=150.00, theme='#277C78', user=self.test_user1)
+        Pot.objects.create(name='Savings', target=200000, total=15000, theme='#277C78', user=self.test_user1)
 
     # url exists
     def test_url_exists(self):
@@ -478,12 +479,12 @@ class PotWithdrawViewTest(TestCase):
         client.force_authenticate(self.test_user1)
         
         data = {
-            'amount': 100.00,
+            'amount': 100,
         }
 
         response = client.put('/finance-api/pots/withdraw/1', data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['total'], 50.00)
+        self.assertEqual(response.data['total'], 5000)
 
 
     def test_amount_puts_total_below_zero_raises_validation_error(self):
@@ -491,7 +492,7 @@ class PotWithdrawViewTest(TestCase):
         client.force_authenticate(self.test_user1)
         
         data = {
-            'amount': 160.00,
+            'amount': 160,
         }
 
         response = client.put('/finance-api/pots/withdraw/1', data)
@@ -504,7 +505,7 @@ class PotAddViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
-        Pot.objects.create(name='Savings', target=2000.00, total=150.00, theme='#277C78', user=self.test_user1)
+        Pot.objects.create(name='Savings', target=200000, total=15000, theme='#277C78', user=self.test_user1)
 
     # url exists
     def test_url_exists(self):
@@ -528,12 +529,12 @@ class PotAddViewTest(TestCase):
         client.force_authenticate(self.test_user1)
         
         data = {
-            'amount': 100.00,
+            'amount': 100,
         }
 
         response = client.put('/finance-api/pots/add/1', data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['total'], 250.00)
+        self.assertEqual(response.data['total'], 25000)
 
 
     def test_amount_puts_target_above_total_raises_validation_error(self):
@@ -541,7 +542,7 @@ class PotAddViewTest(TestCase):
         client.force_authenticate(self.test_user1)
         
         data = {
-            'amount': 2000.00,
+            'amount': 2000,
         }
 
         response = client.put('/finance-api/pots/add/1', data)
@@ -556,17 +557,17 @@ class TransactionListViewTest(TestCase):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
         
         # create 11 object to test pagination
-        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='Bills', date='2024-07-12T13:40:46Z', amount=-95.50, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Bills', date='2024-07-30T13:20:14Z', amount=-35.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-100.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Swift Ride Share', category='Transportation', date='2024-07-02T19:50:05Z', amount=-16.50, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Serenity Spa & Wellness', category='Personal Care', date='2024-07-03T14:00:37Z', amount=-30.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Elevate Education', category='Education', date='2024-07-05T11:15:22Z', amount=-50.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='William Harris', category='General', date='2024-07-06T17:10:09Z', amount=20.00, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Sebastian Cook', category='Transportation', date='2024-07-07T11:45:55Z', amount=-20.00, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Mason Martinez', category='Lifestyle', date='2024-07-08T15:20:41Z', amount=-65.00, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Sofia Peterson', category='Transportation', date='2024-07-09T08:55:27Z', amount=-12.50, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Yuna Kim', category='Dining Out', date='2024-07-10T12:30:13Z', amount=-27.50, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='James Thompson', category='Bills', date='2024-07-12T13:40:46Z', amount=-9550, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='EcoFuel Energy', category='Bills', date='2024-07-30T13:20:14Z', amount=-3500, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-10000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Swift Ride Share', category='Transportation', date='2024-07-02T19:50:05Z', amount=-1650, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Serenity Spa & Wellness', category='Personal Care', date='2024-07-03T14:00:37Z', amount=-3000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Elevate Education', category='Education', date='2024-07-05T11:15:22Z', amount=-5000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='William Harris', category='General', date='2024-07-06T17:10:09Z', amount=2000, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Sebastian Cook', category='Transportation', date='2024-07-07T11:45:55Z', amount=-2000, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Mason Martinez', category='Lifestyle', date='2024-07-08T15:20:41Z', amount=-6500, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Sofia Peterson', category='Transportation', date='2024-07-09T08:55:27Z', amount=-1250, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Yuna Kim', category='Dining Out', date='2024-07-10T12:30:13Z', amount=-2750, recurring=False, user=self.test_user1)
 
     # url
     def test_url_exists(self):
@@ -625,11 +626,11 @@ class TransactionSearchViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
-        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-100.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Swift Ride Share', category='Transportation', date='2024-07-02T19:50:05Z', amount=-16.50, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Serenity Spa & Wellness', category='Personal Care', date='2024-07-03T14:00:37Z', amount=-30.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Elevate Education', category='Education', date='2024-07-05T11:15:22Z', amount=-50.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='William Harris', category='General', date='2024-07-06T17:10:09Z', amount=20.00, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-10000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Swift Ride Share', category='Transportation', date='2024-07-02T19:50:05Z', amount=-1650, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Serenity Spa & Wellness', category='Personal Care', date='2024-07-03T14:00:37Z', amount=-3000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Elevate Education', category='Education', date='2024-07-05T11:15:22Z', amount=-5000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='William Harris', category='General', date='2024-07-06T17:10:09Z', amount=2000, recurring=False, user=self.test_user1)
      
     # url
     def test_url_exists(self):
@@ -677,11 +678,11 @@ class RecurringTransactionsViewTest(TestCase):
     def setUp(self):
         self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
 
-        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-100.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Swift Ride Share', category='Transportation', date='2024-07-02T19:50:05Z', amount=-16.50, recurring=False, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Serenity Spa & Wellness', category='Personal Care', date='2024-07-03T14:00:37Z', amount=-30.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='Elevate Education', category='Education', date='2024-07-05T11:15:22Z', amount=-50.00, recurring=True, user=self.test_user1)
-        Transaction.objects.create(avatar='/imgurl', name='William Harris', category='General', date='2024-07-06T17:10:09Z', amount=20.00, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-10000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Swift Ride Share', category='Transportation', date='2024-07-02T19:50:05Z', amount=-1650, recurring=False, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Serenity Spa & Wellness', category='Personal Care', date='2024-07-03T14:00:37Z', amount=-3000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='Elevate Education', category='Education', date='2024-07-05T11:15:22Z', amount=-5000, recurring=True, user=self.test_user1)
+        Transaction.objects.create(avatar='/imgurl', name='William Harris', category='General', date='2024-07-06T17:10:09Z', amount=2000, recurring=False, user=self.test_user1)
      
     # url
     def test_url_exists(self):

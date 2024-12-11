@@ -30,7 +30,7 @@ class IndexView(APIView):
         for budget in budgets:
             budget_spending[f'{budget.category}'] = 0
         
-        # using budget category loop over transactions (migth have to filter further using date*)
+        # using budget category loop over transactions (might have to filter further using date*)
         for key in budget_spending:
             for transaction in transactions:
                 if key == transaction.category:
@@ -96,7 +96,7 @@ class BudgetListView(APIView):
         # create object from request
         data = {
             'category': request.data.get('category'), 
-            'maximum': request.data.get('maximum'),
+            'maximum': float(request.data.get('maximum')) * 100,
             'theme': request.data.get('theme'), 
             'user': request.user.id
         }
@@ -150,7 +150,7 @@ class BudgetDetailView(APIView):
         
         data = {
             'category': request.data.get('category'), 
-            'maximum': request.data.get('maximum'),
+            'maximum': float(request.data.get('maximum')) * 100,
             'theme': request.data.get('theme'), 
             'user': request.user.id
         }
@@ -232,7 +232,7 @@ class TransactionListView(APIView):
             page_obj = paginator.page(page) 
             
             serializer = TransactionSerializer(page_obj, many=True)
-        
+
             return Response({ 'page_list': serializer.data, 'num_pages': paginator.num_pages }, status=status.HTTP_200_OK)
         
         except:
@@ -292,12 +292,13 @@ class PotListView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    # CREATE NEW
     def post(self, request, *args, **kwargs):
         
         data = {
             'name': request.data.get('name'), 
-            'target': request.data.get('target'),
-            'total': request.data.get('total'),
+            'target': float(request.data.get('target')) * 100,
+            'total': float(request.data.get('total')) * 100,
             'theme': request.data.get('theme'), 
             'user': request.user.id
         }
@@ -350,7 +351,7 @@ class PotDetailView(APIView):
         
         data = {
             'name': request.data.get('name'), 
-            'target': request.data.get('target'),
+            'target': float(request.data.get('target')) * 100,
             'total': pot_instance.total,
             'theme': request.data.get('theme'), 
             'user': request.user.id
@@ -407,7 +408,7 @@ class PotWithdrawView(APIView):
         data = {
             'name': pot_instance.name, 
             'target': pot_instance.target,
-            'total': pot_instance.total - float(request.data.get('amount')),
+            'total': pot_instance.total - (float(request.data.get('amount')) * 100),
             'theme': pot_instance.theme, 
             'user': request.user.id
         }
@@ -444,7 +445,7 @@ class PotAddView(APIView):
         data = {
             'name': pot_instance.name, 
             'target': pot_instance.target,
-            'total': pot_instance.total + float(request.data.get('amount')),
+            'total': pot_instance.total + float(request.data.get('amount')) * 100,
             'theme': pot_instance.theme, 
             'user': request.user.id
         }
