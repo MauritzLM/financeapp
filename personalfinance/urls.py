@@ -21,6 +21,6 @@ urlpatterns = [
     path('budgets/<str:category>', BudgetSpendingView.as_view()),
     path('budgets/new/<str:category>', NewBudgetSpendingView.as_view()),
     path('transactions/recurring', RecurringTransactionsView.as_view()),
-    path('transactions/<str:category>/<str:sort_by>/<int:page>', TransactionListView.as_view()),
     path('transactions/search/<str:search_term>/<str:sort_by>/<int:page>', TransactionSearchView.as_view()),
+    path('transactions/<str:search_term>/<str:category>/<str:sort_by>/<int:page>', TransactionListView.as_view()),
 ]
