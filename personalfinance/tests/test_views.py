@@ -349,8 +349,6 @@ class PotListViewTest(TestCase):
          }
 
         response = client.post('/finance-api/pots', data)
-        print(response.data)
-
         self.assertEqual(response.status_code, 201)
 
 
@@ -574,14 +572,14 @@ class TransactionListViewTest(TestCase):
         client = APIClient()
         client.force_authenticate(self.test_user1)
 
-        response = client.get('/finance-api/transactions/All/Latest/1')
+        response = client.get('/finance-api/transactions/empty/All/Latest/1')
         self.assertEqual(response.status_code, 200) 
        
     # user not logged in
     def test_user_not_logged_in(self):
         client = APIClient()
         
-        response = client.get('/finance-api/transactions/All/Latest/1')
+        response = client.get('/finance-api/transactions/empty/All/Latest/1')
         self.assertEqual(response.status_code, 401)
 
     # get
@@ -589,7 +587,7 @@ class TransactionListViewTest(TestCase):
         client = APIClient()
         client.force_authenticate(self.test_user1)
 
-        response = client.get('/finance-api/transactions/All/Latest/1')
+        response = client.get('/finance-api/transactions/empty/All/Latest/1')
         self.assertEqual(len(response.data['page_list']), 10)
         self.assertEqual(response.data['num_pages'], 2)
 
@@ -597,7 +595,7 @@ class TransactionListViewTest(TestCase):
         client = APIClient()
         client.force_authenticate(self.test_user1)
 
-        response = client.get('/finance-api/transactions/All/Latest/2')
+        response = client.get('/finance-api/transactions/empty/All/Latest/2')
         self.assertEqual(len(response.data['page_list']), 1)
         self.assertEqual(response.data['num_pages'], 2)
     
@@ -605,7 +603,7 @@ class TransactionListViewTest(TestCase):
         client = APIClient()
         client.force_authenticate(self.test_user1)
 
-        response = client.get('/finance-api/transactions/Transportation/Latest/1')
+        response = client.get('/finance-api/transactions/empty/Transportation/Latest/1')
         self.assertEqual(len(response.data['page_list']), 3)
         self.assertEqual(response.data['num_pages'], 1)
 
@@ -615,10 +613,19 @@ class TransactionListViewTest(TestCase):
         client = APIClient()
         client.force_authenticate(self.test_user1)
 
-        response = client.get('/finance-api/transactions/All/Latest/3')
+        response = client.get('/finance-api/transactions/empty/All/Latest/3')
         self.assertEqual(response.status_code, 204)
         self.assertEqual(len(response.data['page_list']), 0)
-        self.assertEqual(response.data['num_pages'], 0)   
+        self.assertEqual(response.data['num_pages'], 0)
+
+    # test search term*
+    def test_get_with_searchterm(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/transactions/swift/Transportation/Latest/1')   
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['page_list']), 1)
 
 
 # transaction search  
@@ -647,7 +654,15 @@ class TransactionSearchViewTest(TestCase):
         response = client.get('/finance-api/transactions/search/aqua/Latest/1')
         self.assertEqual(response.status_code, 401)
 
-    # get 
+    # get
+    def test_get_empty_search(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/transactions/search/empty/Latest/1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['page_list']), 5)
+
     def test_get_search_ignores_case(self):
         client = APIClient()
         client.force_authenticate(self.test_user1)
