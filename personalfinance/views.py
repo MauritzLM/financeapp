@@ -213,19 +213,26 @@ class TransactionListView(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, sort_by, page, category,*args, **kwargs):
+    def get(self, request, search_term, category, sort_by, page, *args, **kwargs):
         try:
             # sort by
             sort = get_sort_str(sort_by)
 
-            transactions = ...
-            
-            # category selected
-            if category == 'All':
-                transactions = Transaction.objects.filter(user=request.user.id).order_by(sort)
+            transactions = Transaction.objects.filter(user=request.user.id).order_by(sort)
 
-            else:    
-                transactions = Transaction.objects.filter(user=request.user.id, category=category).order_by(sort)
+            # empty search and specific category
+            if search_term == 'empty' and category != 'All':
+                transactions = transactions.filter(category=category)    
+            
+            # with search term
+            if search_term != 'empty':
+                # all categories
+                if category == 'All':
+                    transactions = transactions.filter(name__icontains=search_term)
+                    
+                # specific category
+                if category != 'All':
+                    transactions = transactions.filter(category=category, name__icontains=search_term)
 
             # 10 transactions per page
             paginator = Paginator(transactions, 10)
@@ -244,15 +251,12 @@ class TransactionSearchView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, sort_by, page, search_term, *args, **kwargs):
-        # all transactions of user
         try:
             sort = get_sort_str(sort_by)
 
-            transactions = ...
-
-            if search_term == 'empty':
-                transactions = Transaction.objects.filter(user=request.user.id).order_by(sort)
-            else:
+            transactions = Transaction.objects.filter(user=request.user.id).order_by(sort)
+            
+            if search_term != 'empty':
                 transactions = Transaction.objects.filter(user=request.user.id, name__icontains=search_term).order_by(sort)
 
             # 10 transactions per page
@@ -264,7 +268,7 @@ class TransactionSearchView(APIView):
             return Response({ 'page_list': serializer.data, 'num_pages': paginator.num_pages }, status=status.HTTP_200_OK)
         
         except:
-            return Response({ 'page_list': [], 'num_pages': 0 }, status=status.HTTP_204_NO_CONTENT)    
+            return Response({ 'page_list': [], 'num_pages': 0 }, status=status.HTTP_204_NO_CONTENT)   
 
 
 class RecurringTransactionsView(APIView):
