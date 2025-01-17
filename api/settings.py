@@ -34,7 +34,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-)5$@4+q_(1zc3_
 # DEBUG = True
 DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['localhost', 'web-production-de787.up.railway.app']
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
