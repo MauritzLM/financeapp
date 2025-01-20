@@ -37,7 +37,7 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 ALLOWED_HOSTS = ['localhost', 'web-production-de787.up.railway.app']
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
+    'http://localhost:5173', 'https://finance-app-client-ruddy.vercel.app/',
 ]
 
 CSRF_TRUSTED_ORIGINS = ['https://web-production-de787.up.railway.app']
