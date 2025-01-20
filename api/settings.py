@@ -37,7 +37,7 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '') != 'False'
 ALLOWED_HOSTS = ['localhost', 'web-production-de787.up.railway.app']
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173', 'https://finance-app-client-ruddy.vercel.app/',
+    'http://localhost:5173', 'https://finance-app-client-ruddy.vercel.app',
 ]
 
 CSRF_TRUSTED_ORIGINS = ['https://web-production-de787.up.railway.app']
@@ -103,10 +103,10 @@ DATABASES = {
 }
 
 if 'DATABASE_URL' in os.environ:
-    DATABASES['default'] = dj_database_url.config(
-        conn_max_age=500,
+     DATABASES['default'] = dj_database_url.config(
+         conn_max_age=500,
         conn_health_checks=True,
-    )
+     )
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
