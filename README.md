@@ -1,38 +1,36 @@
-## Finance app API
+# Finance app API
 
   - Built using [django-rest-framework](https://www.django-rest-framework.org/)
   - [rest-knox](https://jazzband.github.io/django-rest-knox/) for authentication
   - hosted on [railway](https://railway.com/)
   - [Frontend repo](https://github.com/MauritzLM/finance-app-client)
 
-### Models
+## Models
 
   - transactions
-
   - pots
-
   - budgets
 
-### Views
-#### index
+## Views
+### index
 
   - Gets all user pots and budgets
   - 5 most recent transactions
   - Creates budgets spending object and calculates budgets spending for each budget
   - Calculates income and expenses    
 
-#### budget list
+### budget list
 
   - Get method: gets all user budgets and calculates budget spending
   - Post method: create a new budget 
 
-#### budget detail
+### budget detail
 
   - Get method: gets a specific budget by id
   - Put method: update a budget
   - Delete method: delete a budget 
 
-#### budget spending
+### budget spending
 
   - Gets the three most recent transactions of a particular budget (transaction category)
 
@@ -44,29 +42,29 @@
   
   - Gets a paginated list of transactions based on sort, search term and category
 
-#### transaction search
+### transaction search
   
   - Gets a paginated list of transactions based on search term and sort
 
-#### recurring transactions
+### recurring transactions
   
   - Gets all recurring transactions
 
-#### pot list
+### pot list
 
   - Get method: gets all user pots
   - Post method: create a new pot 
 
-#### pot detail
+### pot detail
   
   - Get method: gets a specific pot
   - Put method: update a pot
   - Delete method: delete a pot
 
-#### pot withdraw
+### pot withdraw
 
   - Put method: withdraw from a pot total 
 
-#### pot add
+### pot add
 
   - Put method: add to a pot total
