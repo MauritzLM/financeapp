@@ -471,13 +471,14 @@ class TransactionCreateView(APIView):
       
     # CREATE NEW
     def post(self, request, *args, **kwargs):
+        # income or expense?*
         
         data = {
             'avatar': request.data.get('avatar'),
             'name': request.data.get('name'), 
             'category': request.data.get('category'),
             'date': request.data.get('date'),
-            'amount': request.data.get('amount'),
+            'amount': float(request.data.get('amount')) * 100,
             'recurring': request.data.get('recurring'),
             'user': request.user.id
         }
