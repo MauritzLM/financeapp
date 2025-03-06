@@ -719,4 +719,145 @@ class RecurringTransactionsViewTest(TestCase):
         client.force_authenticate(self.test_user1)
 
         response = client.get('/finance-api/transactions/recurring')
-        self.assertEqual(len(response.data), 3)    
+        self.assertEqual(len(response.data), 3)
+
+
+# transaction forms
+class TransactionCreateViewTest(TestCase):
+    def setUp(self):
+        self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
+
+    # url
+    def test_url_exists(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/transactions/create')
+        # no get method
+        self.assertEqual(response.status_code, 405)
+
+
+    # user not logged in
+    def test_user_not_logged_in(self):
+        client = APIClient()
+        
+        response = client.get('/finance-api/transactions/create')
+        self.assertEqual(response.status_code, 401)
+
+    # post -> create new transaction
+    def test_post_with_invalid_data(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+        
+        # invalid*
+        data = {
+            'avatar': '',
+            'name': 'Aqua Flow Utilities',
+            'category': 'Bills',
+            'date': '2024-07-29T11:55:29Z',
+            'amount': 0,
+            'recurring': True,
+        }
+
+        response = client.post('/finance-api/transactions/create', data)
+        # print(response.data)
+        # add check for error* 
+        self.assertEqual(response.status_code, 400)
+
+    def test_post_with_valid_data(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        data = {
+            'avatar': '/imgurl',
+            'name': 'Aqua Flow Utilities',
+            'category': 'Bills',
+            'date': '2024-07-29T11:55:29Z',
+            'amount': -10000,
+            'recurring': True,
+        }
+
+        response = client.post('/finance-api/transactions/create', data)
+        self.assertEqual(response.status_code, 201)
+
+
+# transaction detail view -> update, delete
+class TransactionDetailViewTest(TestCase):
+    def setUp(self):
+        self.test_user1 = User.objects.create_user(username='testuser1', password='1X<ISRUkw+tuK')
+
+        Transaction.objects.create(avatar='/imgurl', name='Aqua Flow Utilities', category='Bills', date='2024-07-29T11:55:29Z', amount=-10000, recurring=True, user=self.test_user1)
+    
+    # url
+    def test_url_exists(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.get('/finance-api/transactions/1')
+        # no get method
+        self.assertEqual(response.status_code, 405)
+    
+    # user not logged in
+    def test_user_not_logged_in(self):
+        client = APIClient()
+        
+        response = client.get('/finance-api/transactions/1')
+        self.assertEqual(response.status_code, 401)
+
+    # PUT
+    def test_put_with_valid_data(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+        
+        data = {
+            'avatar': '/imgurl',
+            'name': 'Flow Utilities',
+            'category': 'Bills',
+            'date': '2024-07-29T11:55:29Z',
+            'amount': -10000,
+            'recurring': False,
+        }
+
+        response = client.put('/finance-api/transactions/1', data)
+        self.assertEqual(response.status_code, 200)
+        # updated fields
+        self.assertEqual(response.data['name'], 'Flow Utilities')
+        self.assertEqual(response.data['amount'], -10000)
+        self.assertEqual(response.data['recurring'], False)
+
+    def test_put_with_invalid_data(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+        
+        # invalid*
+        data = {
+            'avatar': '',
+            'name': 'Aqua Flow Utilities',
+            'category': 'Bills',
+            'date': '2024-07-29T11:55:29Z',
+            'amount': 0,
+            'recurring': True,
+        }
+
+        response = client.put('/finance-api/transactions/1', data)
+        # print(response.data)
+        # add check for error* 
+        self.assertEqual(response.status_code, 400)    
+
+    # DELETE
+    def test_delete_with_valid_data(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.delete('/finance-api/transactions/1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'Transaction deleted!')
+
+
+    def test_delete_with_invalid_data(self):
+        client = APIClient()
+        client.force_authenticate(self.test_user1)
+
+        response = client.delete('/finance-api/transactions/100')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['message'], 'Object with transaction id does not exist')
