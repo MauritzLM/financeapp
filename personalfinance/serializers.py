@@ -11,6 +11,30 @@ class TransactionSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'user': {'write_only': True}}
 
+    def validate(self, data):
+        errors = {}
+
+        # empty name
+        if data['name'] == '':
+            errors['name'] = 'Please enter a name'
+        # no avatar selected
+        if data['avatar'] == '':
+            errors['avatar'] == 'Please select an avatar'
+        # empty category
+        if data['category'] == '':
+            errors['category'] = 'Please select a category'
+        # empty date
+        if data['date'] == '':
+            errors['date'] = 'Please specify a date'
+        # empty amount
+        if data['amount'] == 0:
+            errors['amount'] = 'Please enter an amount'
+                    
+        if errors:
+            raise serializers.ValidationError(errors)
+            
+        return super().validate(data)    
+
 
 class BudgetSerializer(serializers.ModelSerializer):
     class Meta:

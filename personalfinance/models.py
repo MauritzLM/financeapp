@@ -9,7 +9,7 @@ class Transaction(models.Model):
     category = models.CharField(max_length=50)
     date = models.DateTimeField('Transaction Date')
     amount = models.IntegerField()
-    recurring = models.BooleanField()
+    recurring = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Transactions')
 
     def __str__(self):

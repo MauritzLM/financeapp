@@ -278,7 +278,7 @@ class RecurringTransactionsView(APIView):
     def get(self, request, *args, **kwargs):
         
         transactions = Transaction.objects.filter(user=request.user.id)
-        recurring_bills = transactions.filter(recurring=True)
+        recurring_bills = transactions.filter(recurring=True, amount__lt=0)
 
         serializer = TransactionSerializer(recurring_bills, many=True)
 
@@ -461,3 +461,94 @@ class PotAddView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# transaction form views
+# transaction create view
+class TransactionCreateView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
+      
+    # CREATE NEW
+    def post(self, request, *args, **kwargs):
+        # income or expense?*
+        # user transactions limit?*
+        
+        data = {
+            'avatar': request.data.get('avatar'),
+            'name': request.data.get('name'), 
+            'category': request.data.get('category'),
+            'date': request.data.get('date'),
+            'amount': float(request.data.get('amount')) * 100,
+            'recurring': request.data.get('recurring'),
+            'user': request.user.id
+        }
+
+        serializer = TransactionSerializer(data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# transaction detail view
+class TransactionDetailView(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = [permissions.IsAuthenticated]
+
+    # helper method to get budget instance
+    def get_object(self, t_id, user_id):
+            try:
+                return Transaction.objects.get(id=t_id,  user=user_id)
+            except Transaction.DoesNotExist:
+                return None
+
+    # UPDATE
+    def put(self, request, t_id, *args, **kwargs):
+        
+        transaction_instance = self.get_object(t_id, request.user.id)
+
+        if not transaction_instance:
+            return Response(
+                { 'message': 'Object with transaction id does not exists' }, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        data = {
+            'avatar': request.data.get('avatar'),
+            'name': request.data.get('name'), 
+            'category': request.data.get('category'),
+            'date': request.data.get('date'),
+            'amount': request.data.get('amount'),
+            'recurring': request.data.get('recurring'),
+            'user': request.user.id
+        }
+
+        serializer = TransactionSerializer(transaction_instance, data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # DELETE
+    def delete(self, request, t_id, *args, **kwargs):
+
+        transaction_instance = self.get_object(t_id, request.user.id)
+
+        if not transaction_instance:
+            return Response(
+                { 'message': 'Object with transaction id does not exist' }, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        transaction_instance.delete()
+
+        return Response(
+            { 'message': 'Transaction deleted!' },
+            status=status.HTTP_200_OK
+        )
