@@ -278,7 +278,7 @@ class RecurringTransactionsView(APIView):
     def get(self, request, *args, **kwargs):
         
         transactions = Transaction.objects.filter(user=request.user.id)
-        recurring_bills = transactions.filter(recurring=True)
+        recurring_bills = transactions.filter(recurring=True, amount__lt=0)
 
         serializer = TransactionSerializer(recurring_bills, many=True)
 
@@ -472,6 +472,7 @@ class TransactionCreateView(APIView):
     # CREATE NEW
     def post(self, request, *args, **kwargs):
         # income or expense?*
+        # user transactions limit?*
         
         data = {
             'avatar': request.data.get('avatar'),
