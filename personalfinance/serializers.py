@@ -9,7 +9,8 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = '__all__'
-        extra_kwargs = {'user': {'write_only': True}}
+        extra_kwargs = {'user': {'write_only': True}, 'date': {'error_messages': {'required': 'Please enter a valid date', 'invalid': 'Please enter a valid date.'}}}
+        
 
     def validate(self, data):
         errors = {}
@@ -23,9 +24,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         # empty category
         if data['category'] == '':
             errors['category'] = 'Please select a category'
-        # empty date
-        if data['date'] == '':
-            errors['date'] = 'Please specify a date'
         # empty amount
         if data['amount'] == 0:
             errors['amount'] = 'Please enter an amount'
